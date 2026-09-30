@@ -1,0 +1,168 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>صورة بروفايل طموح</title>
+<link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700;800&display=swap" rel="stylesheet">
+<style>
+:root{--navy:#14027D;--orange:#F06C00;--bg:#EFECFB;--card:#fff;--ink:#241E45;--mute:#6B6785;--line:#E2DEF5;--soft:#EEEBFA;--hd:#14027D;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){--bg:#0A0345;--card:#140872;--ink:#F3F1FF;--mute:#B7B1E6;--line:#2B1D9A;--soft:#20128D;--hd:#0A0345}}
+:root[data-theme="dark"]{--bg:#0A0345;--card:#140872;--ink:#F3F1FF;--mute:#B7B1E6;--line:#2B1D9A;--soft:#20128D;--hd:#0A0345}
+html{scroll-padding-top:env(safe-area-inset-top,0px)}
+*{box-sizing:border-box;margin:0;padding:0}
+body{background:var(--bg);color:var(--ink);font-family:Cairo,Tahoma,"Segoe UI",sans-serif;line-height:1.7;min-height:100vh}
+.hero{background:radial-gradient(120% 90% at 50% 0%,#2A10C9 0%,var(--hd) 62%);color:#fff;text-align:center;padding:26px 18px 120px;border-radius:0 0 44px 44px}
+.tag{display:inline-block;background:var(--orange);color:#fff;font-weight:700;font-size:13px;padding:1px 16px;border-radius:20px}
+h1{font-size:28px;font-weight:800;margin-top:6px;line-height:1.4}
+.hero p{opacity:.8;font-size:14.5px}
+.wrap{max-width:460px;margin:-96px auto 0;padding:0 18px 40px}
+.card{background:var(--card);border-radius:30px;padding:22px 20px 20px;box-shadow:0 24px 60px rgba(20,2,125,.28);border:1.5px solid var(--line)}
+.stage{width:min(100%,360px);aspect-ratio:1;margin:0 auto;border-radius:50%;box-shadow:0 18px 40px rgba(20,2,125,.35)}
+canvas{width:100%;height:100%;display:block;border-radius:50%;touch-action:none;cursor:grab}
+canvas:active{cursor:grabbing}
+.hint{text-align:center;color:var(--mute);font-size:13px;margin-top:14px;min-height:22px}
+.btn{display:flex;align-items:center;justify-content:center;width:100%;border:0;border-radius:16px;padding:12px 18px;font:700 16px Cairo,Tahoma,sans-serif;cursor:pointer;transition:transform .1s}
+.btn:active{transform:scale(.98)}
+.btn.pri{background:var(--orange);color:#fff;margin-top:12px}
+.btn.sec{background:var(--navy);color:#fff;margin-top:14px}
+:root[data-theme="dark"] .btn.sec{background:#3B26D8}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]) .btn.sec{background:#3B26D8}}
+.btn[disabled]{opacity:.4;cursor:not-allowed}
+.row{margin-top:16px}
+.row label{display:flex;justify-content:space-between;font-weight:700;font-size:14px}
+input[type=range]{width:100%;accent-color:var(--orange);margin-top:6px;height:28px}
+.drop{border:2.5px dashed var(--orange);border-radius:18px;padding:8px;text-align:center;color:var(--mute);font-size:13px;margin-top:12px}
+.drop.on{background:rgba(240,108,0,.12)}
+.note{text-align:center;font-size:12.5px;color:var(--mute);margin-top:16px}
+#fallback{display:none;margin-top:16px;text-align:center}
+#fallback img{width:220px;max-width:70%;border-radius:50%}
+#fallback p{font-size:13px;color:var(--mute);margin-top:6px}
+.msg{text-align:center;font-weight:700;font-size:14px;margin-top:10px;min-height:22px;color:var(--orange)}
+input[type=file]{display:none}
+</style></head><body>
+<div class="hero"><span class="tag">عائلة طموح</span><h1>صورة بروفايل موحّدة</h1><p>حوّل صورتك إلى الصورة الرسمية لأعضاء النادي</p></div>
+<div class="wrap">
+<div class="card">
+  <div class="stage"><canvas id="cv" width="1080" height="1080"></canvas></div>
+  <div class="hint" id="hint">اختر صورتك ثم اسحبها لضبط الوجه في الوسط</div>
+  <button class="btn pri" id="pick">اختيار صورة</button>
+  <input type="file" id="file" accept="image/*">
+  <div class="drop" id="drop">أو اسحب الصورة وأفلتها هنا</div>
+  <div class="row"><label><span>التكبير</span><span id="zv">100%</span></label><input type="range" id="zoom" min="1" max="3" step="0.01" value="1" disabled></div>
+  <button class="btn sec" id="dl" disabled>حفظ الصورة</button>
+  <div class="msg" id="msg"></div>
+  <div id="fallback"><img id="fimg" alt=""><p>اضغط مطولًا على الصورة لحفظها في هاتفك</p></div>
+</div>
+<p class="note">تتم معالجة الصورة داخل جهازك فقط، ولا يتم رفعها إلى أي مكان.</p>
+</div>
+<script>
+(function(){
+var NAVY="#14027D",ORANGE="#F06C00",S=1080,CX=540,CY=592,PR=378,RR=418;
+var FLAME=new Path2D("M71.1 0.7L70.8 1.2L70.7 1.7L70.8 1.8L70.8 5.9L69.9 10.3L69.2 11.6L68.8 12.8L68.0 14.1L67.8 14.8L66.5 16.5L66.0 17.4L63.9 20.0L61.1 23.0L54.0 29.9L52.3 31.2L49.6 33.8L48.1 34.9L42.6 39.8L38.3 43.2L36.4 45.0L34.4 46.5L33.3 47.6L32.2 48.3L30.4 50.0L28.4 51.5L26.7 53.1L22.5 57.4L20.9 59.6L20.1 60.4L19.8 61.1L19.2 61.8L18.8 62.7L18.2 63.4L17.8 64.3L17.2 65.1L16.6 66.6L16.2 67.1L15.9 68.3L15.1 69.9L14.0 73.6L13.8 75.3L13.2 77.7L13.2 78.8L13.0 79.8L13.1 86.4L13.4 87.6L13.6 89.3L13.9 90.2L14.1 92.0L14.8 93.9L15.3 96.0L16.0 97.5L16.2 98.5L16.9 99.6L17.1 100.6L17.8 101.8L18.0 102.5L18.9 103.9L19.2 104.7L19.9 105.6L20.1 106.3L20.9 107.3L21.3 108.2L22.3 109.7L22.8 110.2L24.2 112.4L26.0 114.5L26.9 115.8L28.5 117.4L29.1 118.2L35.9 124.8L40.4 128.4L41.7 129.2L42.3 129.8L45.2 131.8L45.7 132.0L46.5 132.6L47.5 133.0L48.4 133.8L49.6 134.3L50.1 134.7L51.1 135.1L51.9 135.7L53.0 136.1L53.9 136.7L55.1 137.1L56.3 137.8L57.5 138.2L57.8 138.1L57.9 137.9L57.8 137.3L57.1 136.4L56.6 135.2L55.1 132.8L54.9 132.1L54.1 130.8L53.9 130.1L53.1 128.7L52.8 127.6L52.1 126.5L51.7 124.9L51.1 124.0L50.6 122.0L50.0 120.8L49.7 119.0L49.0 117.0L48.8 115.1L48.5 113.9L48.5 113.1L48.2 111.5L48.2 107.4L48.9 103.0L49.8 100.7L50.1 99.3L51.0 97.4L51.8 96.4L52.1 95.7L52.9 94.5L55.2 91.7L57.7 89.3L61.9 86.1L62.6 85.8L63.4 85.9L63.7 86.5L63.7 87.5L63.8 87.6L63.8 90.2L63.9 90.3L64.1 95.4L64.4 96.7L64.4 97.5L64.9 99.4L65.0 101.2L65.9 104.4L66.1 105.8L66.7 107.0L67.0 108.5L67.7 110.0L68.0 111.1L68.7 112.2L69.1 113.3L69.9 114.6L70.1 115.3L70.9 116.3L71.1 116.8L73.1 119.7L73.7 120.3L74.3 121.2L78.9 125.8L79.5 126.1L81.4 127.8L82.3 128.3L83.2 129.1L85.3 130.5L86.4 131.0L87.4 131.8L88.4 132.2L90.8 133.7L91.8 134.1L93.1 134.9L93.8 135.1L95.1 135.9L95.9 136.1L97.0 136.7L97.8 136.9L99.1 137.7L100.3 138.0L101.5 138.7L102.8 139.1L103.5 139.6L105.2 140.1L105.6 140.1L106.2 139.8L108.5 137.3L109.2 136.2L110.9 134.4L113.1 131.5L114.9 129.4L115.4 128.5L116.3 127.5L117.2 126.1L117.8 125.5L118.1 124.8L119.9 122.5L121.6 120.0L123.0 117.4L123.8 116.5L124.3 115.3L124.6 115.0L125.2 113.7L125.7 113.1L126.1 112.1L126.5 111.6L127.1 110.1L127.5 109.6L128.0 108.3L128.7 107.0L129.1 105.6L129.8 104.3L130.1 103.1L130.6 102.4L131.0 100.6L131.7 98.9L132.2 96.4L132.7 95.0L133.1 92.5L133.1 91.7L133.7 88.9L133.8 86.2L133.9 86.1L133.9 80.2L133.8 80.1L133.8 78.4L133.6 77.4L133.6 76.4L133.0 73.5L132.8 71.1L132.2 69.2L131.8 66.6L131.1 64.6L130.7 62.3L130.1 61.1L129.8 59.6L129.1 58.1L128.6 56.0L127.2 52.9L126.6 50.8L126.0 49.8L125.7 48.7L124.0 45.0L123.7 43.9L122.9 42.5L122.4 42.2L121.8 42.7L120.8 44.7L120.2 45.4L119.8 46.3L115.0 53.5L112.0 57.4L110.2 59.3L109.5 60.3L105.9 63.9L102.4 66.8L100.8 67.9L100.3 68.1L99.5 68.8L98.5 69.2L97.6 69.9L95.1 71.2L94.4 71.3L93.9 70.9L93.9 70.0L94.7 68.7L95.1 67.1L95.6 66.4L96.0 64.6L96.6 63.4L97.0 61.6L97.7 59.9L98.0 57.9L98.8 55.2L99.0 52.8L99.7 48.9L99.8 41.4L99.6 40.4L99.6 39.4L99.0 36.5L98.8 34.4L98.1 32.4L97.8 30.7L97.1 29.2L96.7 27.8L96.2 26.9L95.9 25.8L95.2 24.7L94.6 23.2L93.2 21.1L92.8 20.2L92.1 19.4L90.7 17.2L88.4 14.4L84.2 10.1L81.4 7.5L80.5 7.0L79.6 6.1L77.1 4.2L76.4 3.9L75.5 3.1L73.4 1.9L72.5 1.1L71.7 0.7Z"),FB=[13.00,0.70,133.90,140.10];
+var WORD=new Path2D("M11.0 238.2L9.5 239.0L8.0 240.5L7.2 241.8L6.8 244.0L7.2 248.0L8.2 249.5L10.2 251.0L12.5 251.8L45.0 251.8L47.0 252.0L50.8 253.0L54.2 254.8L57.5 257.2L60.8 261.2L62.8 265.5L64.0 271.8L63.8 290.0L63.2 292.0L62.2 293.0L60.5 293.8L22.2 294.0L15.5 295.2L9.0 298.0L6.2 300.0L3.0 304.0L1.0 308.8L0.8 311.0L0.0 311.8L0.0 323.8L0.8 324.8L1.2 327.2L3.0 331.0L4.2 332.8L7.2 335.8L9.5 337.2L15.2 339.8L17.8 340.0L20.0 340.8L22.8 340.8L23.0 341.0L47.5 341.0L49.0 340.8L50.8 339.8L52.5 338.0L53.5 335.2L53.5 332.5L52.5 330.0L51.5 328.8L48.2 327.0L24.0 327.0L19.0 326.0L17.2 325.0L16.0 323.8L14.8 321.5L14.0 318.0L14.8 313.0L15.5 311.8L18.5 309.2L23.2 308.0L25.8 308.0L26.0 307.8L70.5 307.8L74.5 305.8L76.2 303.8L77.8 300.2L77.8 267.8L76.5 261.8L75.8 260.5L75.5 259.0L73.0 253.8L71.0 250.8L66.5 246.0L61.8 242.5L56.5 240.0L55.8 240.0L53.5 239.0L52.2 239.0L48.2 238.0L44.8 238.0L44.5 237.8L13.8 237.8ZM448.8 264.2L446.0 256.2L442.2 250.2L438.2 246.0L436.0 244.2L428.8 240.2L421.8 238.2L416.8 238.0L416.5 237.8L373.0 237.8L372.2 237.0L372.2 217.2L371.8 214.8L370.8 213.0L369.2 211.5L366.8 210.5L363.8 210.2L360.8 211.2L359.0 212.8L358.0 214.5L357.2 218.0L357.2 293.2L356.2 294.0L333.8 294.0L333.0 293.5L332.8 293.0L333.0 291.2L332.8 266.2L331.8 262.8L331.8 261.5L331.0 260.0L330.5 257.8L328.0 252.8L324.8 248.2L319.0 243.2L312.8 240.0L311.8 240.0L309.5 239.0L304.2 238.0L295.2 238.0L291.5 239.0L290.2 239.0L288.8 239.8L287.2 240.0L281.8 242.8L277.5 246.0L274.5 249.2L271.5 253.5L269.0 259.0L268.0 262.2L267.8 264.8L267.2 265.8L267.0 277.5L268.0 281.2L268.0 282.5L268.8 284.0L269.0 285.5L271.2 290.0L273.5 293.0L273.5 293.5L272.8 294.0L159.2 294.0L158.5 293.8L158.0 293.2L158.2 272.0L158.0 271.8L157.8 265.5L156.5 260.2L155.0 256.2L153.0 252.2L150.5 248.8L147.5 245.5L144.8 243.2L141.5 241.2L136.5 239.0L134.5 238.8L132.8 238.0L126.5 237.2L123.0 237.2L119.2 238.0L117.2 238.0L111.8 239.8L107.8 241.8L104.8 243.8L100.0 248.2L97.0 252.5L95.0 256.5L93.2 261.5L92.0 268.8L92.0 277.0L94.0 286.5L97.2 293.2L100.0 297.0L103.2 300.2L108.0 303.8L111.5 305.5L113.0 305.8L115.2 306.8L120.0 307.8L142.5 307.8L143.8 308.5L143.0 312.5L142.0 314.8L141.8 316.2L139.5 320.2L135.5 324.5L131.2 327.0L128.5 328.0L125.2 328.2L123.5 328.8L119.8 328.8L118.0 328.2L114.8 328.0L107.5 325.8L104.8 325.8L103.2 326.2L101.5 328.0L100.8 330.0L101.0 333.5L102.0 335.0L104.5 337.2L109.5 339.5L114.8 340.8L125.5 341.0L132.8 339.8L135.0 338.8L136.5 338.5L141.0 336.2L145.0 333.5L149.8 328.8L152.8 324.5L154.8 320.5L156.8 314.5L156.8 312.8L157.5 310.5L157.5 309.0L158.5 307.8L442.2 307.8L445.2 306.5L447.5 304.5L448.8 302.2L449.5 299.8L449.5 269.2L449.0 267.5ZM372.2 252.5L373.0 251.8L416.8 251.8L421.5 252.8L425.8 254.8L427.8 256.2L430.8 259.2L432.0 261.0L434.0 264.8L435.0 268.0L435.2 285.8L435.0 286.0L435.0 289.8L434.0 292.5L432.0 293.8L386.2 293.8L386.0 294.0L373.5 294.0L372.8 293.8L372.2 293.0ZM290.0 252.8L293.8 250.8L298.2 249.8L303.0 250.0L306.0 250.8L309.8 252.8L314.8 257.8L317.8 264.0L318.8 269.0L319.0 293.0L318.5 293.8L318.0 294.0L298.8 294.0L296.8 293.8L293.0 292.8L290.5 291.5L287.2 289.0L285.5 287.0L284.0 284.8L281.8 279.5L281.8 278.0L281.0 274.8L281.0 268.8L281.8 264.8L283.8 259.8L286.8 255.5ZM114.8 252.5L117.8 250.8L118.5 250.8L120.8 249.8L122.8 249.5L129.0 249.8L130.5 250.5L132.0 250.8L135.5 252.8L139.5 257.0L142.2 262.2L143.8 269.0L144.0 293.0L143.5 293.8L143.0 294.0L123.8 294.0L121.8 293.8L118.0 292.8L115.5 291.5L112.2 289.0L110.5 287.0L108.0 282.8L106.8 279.2L106.0 274.8L106.0 268.8L107.0 263.5L109.2 258.5L110.8 256.2Z"),WB=[0.00,210.25,449.50,341.00];
+var cv=document.getElementById("cv"),ctx=cv.getContext("2d");
+var fileIn=document.getElementById("file"),zoom=document.getElementById("zoom"),zv=document.getElementById("zv");
+var dl=document.getElementById("dl"),hint=document.getElementById("hint"),msg=document.getElementById("msg");
+var img=null,zm=1,ox=0,oy=0;
+function rad(d){return d*Math.PI/180}
+function base(){return Math.max(2*PR/img.width,2*PR/img.height)}
+function clamp(){
+  var s=base()*zm,mx=Math.max(0,img.width*s/2-PR),my=Math.max(0,img.height*s/2-PR);
+  ox=Math.min(mx,Math.max(-mx,ox));oy=Math.min(my,Math.max(-my,oy));
+}
+function placeholder(){
+  var g=ctx.createLinearGradient(0,0,S,S);g.addColorStop(0,"#EDEAFB");g.addColorStop(1,"#C9C2F0");
+  ctx.fillStyle=g;ctx.fillRect(0,0,S,S);ctx.fillStyle="#9B93D6";
+  ctx.beginPath();ctx.arc(CX,CY-70,118,0,7);ctx.fill();
+  ctx.beginPath();ctx.ellipse(CX,CY+360,250,250,0,Math.PI,0);ctx.fill();
+}
+function background(){
+  var g=ctx.createRadialGradient(CX,330,40,CX,CY,620);
+  g.addColorStop(0,"#3A1FE0");g.addColorStop(.42,"#1A05A0");g.addColorStop(1,"#09003C");
+  ctx.fillStyle=g;ctx.fillRect(0,0,S,S);
+  var o=ctx.createRadialGradient(930,900,0,930,900,380);o.addColorStop(0,"rgba(11,85,242,.55)");o.addColorStop(1,"rgba(11,85,242,0)");
+  ctx.fillStyle=o;ctx.fillRect(0,0,S,S);
+  var o2=ctx.createRadialGradient(120,200,0,120,200,300);o2.addColorStop(0,"rgba(240,108,0,.22)");o2.addColorStop(1,"rgba(240,108,0,0)");
+  ctx.fillStyle=o2;ctx.fillRect(0,0,S,S);
+  // bezel ticks
+  for(var i=0;i<90;i++){
+    var a=rad(i*4),major=i%5===0,r1=492,r2=major?518:507;
+    ctx.strokeStyle=major?"rgba(240,108,0,.85)":"rgba(255,255,255,.28)";ctx.lineWidth=major?5:3;ctx.lineCap="round";
+    ctx.beginPath();ctx.moveTo(CX+Math.cos(a)*r1,CY+Math.sin(a)*r1);ctx.lineTo(CX+Math.cos(a)*r2,CY+Math.sin(a)*r2);ctx.stroke();
+  }
+  ctx.lineWidth=2;ctx.strokeStyle="rgba(255,255,255,.14)";
+  ctx.beginPath();ctx.arc(CX,CY,468,0,7);ctx.stroke();
+  ctx.beginPath();ctx.arc(CX,CY,452,0,7);ctx.stroke();
+}
+function star(x,y,r,c){
+  ctx.fillStyle=c;ctx.beginPath();ctx.moveTo(x,y-r);
+  ctx.quadraticCurveTo(x,y,x+r,y);ctx.quadraticCurveTo(x,y,x,y+r);ctx.quadraticCurveTo(x,y,x-r,y);ctx.quadraticCurveTo(x,y,x,y-r);ctx.fill();
+}
+function draw(){
+  ctx.clearRect(0,0,S,S);
+  background();
+  // photo with shadow
+  ctx.save();ctx.shadowColor="rgba(0,0,30,.55)";ctx.shadowBlur=60;ctx.shadowOffsetY=20;
+  ctx.fillStyle="#fff";ctx.beginPath();ctx.arc(CX,CY,PR+6,0,7);ctx.fill();ctx.restore();
+  ctx.save();ctx.beginPath();ctx.arc(CX,CY,PR,0,7);ctx.clip();
+  if(img){var s=base()*zm,w=img.width*s,h=img.height*s;ctx.fillStyle="#fff";ctx.fillRect(0,0,S,S);ctx.drawImage(img,CX+ox-w/2,CY+oy-h/2,w,h)}else placeholder();
+  // soft inner vignette
+  var v=ctx.createRadialGradient(CX,CY,PR*.72,CX,CY,PR);v.addColorStop(0,"rgba(10,0,60,0)");v.addColorStop(1,"rgba(10,0,60,.28)");
+  ctx.fillStyle=v;ctx.fillRect(0,0,S,S);ctx.restore();
+  ctx.lineWidth=8;ctx.strokeStyle="#fff";ctx.beginPath();ctx.arc(CX,CY,PR+4,0,7);ctx.stroke();
+  // white ring with gap at top for the flame
+  var rg=ctx.createLinearGradient(0,CY-RR,0,CY+RR);rg.addColorStop(0,"#FFFFFF");rg.addColorStop(1,"#BDB4F2");
+  ctx.lineCap="round";ctx.lineWidth=20;ctx.strokeStyle=rg;
+  ctx.beginPath();ctx.arc(CX,CY,RR,rad(-90+17),rad(270-17));ctx.stroke();
+  // orange U arc (bottom)
+  var og=ctx.createLinearGradient(CX-RR,0,CX+RR,0);og.addColorStop(0,"#FFA64D");og.addColorStop(.5,"#F06C00");og.addColorStop(1,"#FF8A1F");
+  ctx.lineWidth=38;ctx.strokeStyle=og;ctx.beginPath();ctx.arc(CX,CY,RR,rad(28),rad(152));ctx.stroke();
+  // highlight
+  ctx.lineWidth=5;ctx.strokeStyle="rgba(255,255,255,.55)";ctx.beginPath();ctx.arc(CX,CY,RR+4,rad(34),rad(146));ctx.stroke();
+  // flame
+  var fh=140,k=fh/(FB[3]-FB[1]),fw=(FB[2]-FB[0])*k,fx=CX-fw/2-FB[0]*k,fy=CY-RR-8-fh+FB[1]*k;
+  ctx.save();ctx.shadowColor="rgba(240,108,0,.65)";ctx.shadowBlur=40;
+  ctx.translate(fx,fy);ctx.scale(k,k);ctx.fillStyle=ORANGE;ctx.fill(FLAME,"evenodd");ctx.restore();
+  // wordmark pill
+  var pw=300,ph=104,px=CX-pw/2,py=CY+RR-ph/2+4;
+  ctx.save();ctx.shadowColor="rgba(0,0,50,.45)";ctx.shadowBlur=30;ctx.shadowOffsetY=10;
+  ctx.fillStyle="#fff";ctx.beginPath();ctx.roundRect?ctx.roundRect(px,py,pw,ph,ph/2):ctx.rect(px,py,pw,ph);ctx.fill();ctx.restore();
+  ctx.lineWidth=6;ctx.strokeStyle=NAVY;ctx.beginPath();ctx.roundRect?ctx.roundRect(px,py,pw,ph,ph/2):ctx.rect(px,py,pw,ph);ctx.stroke();
+  var ww=190,wk=ww/(WB[2]-WB[0]),wh=(WB[3]-WB[1])*wk;
+  ctx.save();ctx.translate(CX-ww/2-WB[0]*wk,py+ph/2-wh/2-WB[1]*wk);ctx.scale(wk,wk);ctx.fillStyle=ORANGE;ctx.fill(WORD,"evenodd");ctx.restore();
+  // sparkles
+  star(835,215,30,"#FFA64D");star(885,265,14,"#fff");star(245,300,18,"#fff");
+}
+function load(f){
+  if(!f||!/^image\//.test(f.type)){msg.textContent="اختر ملف صورة من فضلك";return}
+  msg.textContent="";var url=URL.createObjectURL(f),im=new Image();
+  im.onload=function(){img=im;zm=1;ox=0;oy=0;zoom.value=1;zv.textContent="100%";zoom.disabled=false;dl.disabled=false;
+    hint.textContent="اسحب الصورة لتحريكها، واستعمل الشريط للتكبير";document.getElementById("fallback").style.display="none";draw();URL.revokeObjectURL(url)};
+  im.onerror=function(){msg.textContent="تعذّر فتح هذه الصورة"};im.src=url;
+}
+document.getElementById("pick").onclick=function(){fileIn.click()};
+fileIn.onchange=function(){load(fileIn.files[0])};
+var drop=document.getElementById("drop");
+["dragover","dragenter"].forEach(function(e){document.addEventListener(e,function(ev){ev.preventDefault();drop.classList.add("on")})});
+["dragleave","drop"].forEach(function(e){document.addEventListener(e,function(){drop.classList.remove("on")})});
+document.addEventListener("drop",function(ev){ev.preventDefault();if(ev.dataTransfer.files[0])load(ev.dataTransfer.files[0])});
+zoom.oninput=function(){if(!img)return;zm=parseFloat(zoom.value);zv.textContent=Math.round(zm*100)+"%";clamp();draw()};
+cv.addEventListener("wheel",function(e){if(!img)return;e.preventDefault();zm=Math.min(3,Math.max(1,zm-e.deltaY*0.002));zoom.value=zm;zv.textContent=Math.round(zm*100)+"%";clamp();draw()},{passive:false});
+var drag=null;
+cv.addEventListener("pointerdown",function(e){if(!img)return;drag={x:e.clientX,y:e.clientY,ox:ox,oy:oy};cv.setPointerCapture(e.pointerId)});
+cv.addEventListener("pointermove",function(e){if(!drag)return;var k=S/cv.getBoundingClientRect().width;ox=drag.ox+(e.clientX-drag.x)*k;oy=drag.oy+(e.clientY-drag.y)*k;clamp();draw()});
+["pointerup","pointercancel"].forEach(function(n){cv.addEventListener(n,function(){drag=null})});
+dl.onclick=function(){
+  if(!img)return;msg.textContent="";
+  cv.toBlob(function(blob){
+    if(!blob){msg.textContent="تعذّر إنشاء الصورة";return}
+    var u=URL.createObjectURL(blob),a=document.createElement("a");
+    a.href=u;a.download="tomouh-profile.png";document.body.appendChild(a);a.click();a.remove();
+    setTimeout(function(){URL.revokeObjectURL(u)},4000);
+    msg.textContent="تم الحفظ، مرحبًا بك في عائلة طموح";
+    if(/iPhone|iPad|iPod/i.test(navigator.userAgent))showFallback();
+  },"image/png");
+};
+function showFallback(){document.getElementById("fimg").src=cv.toDataURL("image/png");document.getElementById("fallback").style.display="block";msg.textContent=""}
+draw();
+})();
+</script></body></html>
